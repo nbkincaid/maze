@@ -1,0 +1,15 @@
+
+#maze-canvas{
+  display: block;
+  border:1px solid #000;
+  margin: 10px auto;
+}
+
+#maze-svg-container {
+  padding: 5px;
+  width: 500px;
+  height: 500px;
+  border: none;
+  background-color: #000;
+  margin: 10px auto;
+}
