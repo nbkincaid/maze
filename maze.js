@@ -54,6 +54,7 @@ function mazeView(mazeSize, cellSize, domParentID){
   this.cellWidth = cellSize;
   this.width = mazeSize * cellSize;
   this.offset = cellSize;
+  this.playerMarker;
 
   this.setContainer =  function(height, width, domParentID) {
    this.container = SVG.createCanvas(height, width, domParentID);
@@ -76,16 +77,31 @@ function mazeView(mazeSize, cellSize, domParentID){
       }
     }
 
-    this.markStart(model.start.x, model.start.y);
+    this.markPosition(model.playerPosition);
     this.markFinish(model.finish.x, model.finish.y);
   };
 
   this.markStart = function(x,y){
-    this.container.appendChild(SVG.createCircle(this.offset / 2 + x * this.cellWidth, this.offset / 2 + y * this.cellWidth, 2,'rgb(0,255,0)'));
+    this.playerMarker = SVG.createCircle(this.offset / 2 + x * this.cellWidth, this.offset / 2 + y * this.cellWidth, 2,'rgb(255, 0,0)');
+    this.container.appendChild(this.playerMarker);
   };
 
   this.markFinish = function(x,y){
     this.container.appendChild(SVG.createCircle(this.offset / 2 + x * this.cellWidth, this.offset / 2 + y * this.cellWidth, 2,'rgb(0,0,255)'));
+  }
+
+
+  this.markTrail = function(cell){
+    var trailMark = SVG.createCircle(this.offset / 2 + cell.x * this.cellWidth, this.offset / 2 + cell.y * this.cellWidth, 2,'rgb(255,200,200)')
+    this.container.appendChild(trailMark);
+  }
+
+  this.markPosition = function(cell){
+    $(this.playerMarker).remove();
+
+    this.markTrail(cell);
+    this.playerMarker = SVG.createCircle(this.offset / 2 + cell.x * this.cellWidth, this.offset / 2 + cell.y * this.cellWidth, 2,'rgb(255, 0,0)')
+    this.container.appendChild(this.playerMarker);
   }
 
   this.drawWall = function(node1, node2){
@@ -114,6 +130,7 @@ function mazeModel(size){
   this.currentCell;
   this.buildVisiteds = [];
   this.buildCrumTrail = [];
+  this.playerPosition;
 
   this.initialize = function(){
     this.initNodes();
@@ -169,6 +186,7 @@ function mazeModel(size){
 
   this.setStart = function(){
     this.start = this.getNodeByCoordinates(0,0);
+    this.playerPosition = this.start;
   };
 
   this.setFinish = function(){
@@ -217,6 +235,11 @@ function mazeModel(size){
   };
 
   this.isConnected = function(node1, node2){
+
+    if(node1 == null || node2 == null){
+      return false;
+    }
+
     if(this.connectionMatrix[node1.id][node2.id] == 2){
       return true;
     }
@@ -264,7 +287,60 @@ function mazeModel(size){
     }
 
     return null;
-  }
+  },
+
+  this.checkPath = function(direction){
+    var path = false;
+
+    if(direction == "right"){
+      var rightCell = this.getNodeByCoordinates(this.playerPosition.x + 1, this.playerPosition.y);
+
+      if(this.isConnected(this.playerPosition, rightCell)){
+        path = true;
+      }
+    }
+    else if(direction == "left"){
+      var leftCell = this.getNodeByCoordinates(this.playerPosition.x - 1, this.playerPosition.y);
+
+      if(this.isConnected(this.playerPosition, leftCell)){
+        path = true;
+      }
+    }
+    else if(direction == "up"){
+      var upCell = this.getNodeByCoordinates(this.playerPosition.x, this.playerPosition.y - 1);
+
+      if(this.isConnected(this.playerPosition, upCell)){
+        path = true;
+      }
+
+    }
+    else if(direction == "down"){
+      var downCell = this.getNodeByCoordinates(this.playerPosition.x, this.playerPosition.y + 1);
+
+      if(this.isConnected(this.playerPosition, downCell)){
+        path = true;
+      }
+    }
+
+
+    return path;
+  },
+
+  this.moveRight = function(){
+    this.playerPosition = this.getNodeByCoordinates(this.playerPosition.x + 1, this.playerPosition.y)
+  },
+
+  this.moveLeft = function(){
+    this.playerPosition = this.getNodeByCoordinates(this.playerPosition.x - 1, this.playerPosition.y)
+  },
+
+  this.moveUp = function(){
+    this.playerPosition = this.getNodeByCoordinates(this.playerPosition.x, this.playerPosition.y-1)
+  },
+
+  this.moveDown = function(){
+    this.playerPosition = this.getNodeByCoordinates(this.playerPosition.x, this.playerPosition.y+1)
+  },
 
   // this runs when the object is initialized
   this.initialize();
@@ -276,13 +352,44 @@ function mazeController(){
   var maze_size = 50;
   var cell_size = 10;
 
-  this.model = new mazeModel(maze_size);
-  this.view = new mazeView(maze_size,cell_size, 'maze-svg-container');
-  this.view.updateView(this.model);
-}
+  var model = new mazeModel(maze_size);
+  var view = new mazeView(maze_size,cell_size, 'maze-svg-container');
+  view.updateView(model);
 
+  $(document).keydown(function(e) {
+    switch(e.which) {
+        case 37: // left
+          if(model.checkPath("left")){
+            model.moveLeft();
+          }
+          break;
+
+        case 38: // up
+          if(model.checkPath("up")){
+            model.moveUp();
+          }
+          break;
+
+        case 39: // right
+          if(model.checkPath("right")){
+            model.moveRight();
+          }
+          break;
+
+        case 40: // down
+          if(model.checkPath("down")){
+            model.moveDown();
+          }
+          break;
+
+        default: return; // exit this handler for other keys
+    }
+    view.markPosition(model.playerPosition);
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+  });
+
+};
 
 $(document).ready(function(){
   var controller = new mazeController();
-
 });
