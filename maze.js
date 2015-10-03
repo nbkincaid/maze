@@ -90,7 +90,6 @@ function mazeView(mazeSize, cellSize, domParentID){
     this.container.appendChild(SVG.createCircle(this.offset / 2 + x * this.cellWidth, this.offset / 2 + y * this.cellWidth, 2,'rgb(0,0,255)'));
   }
 
-
   this.markTrail = function(cell){
     var trailMark = SVG.createCircle(this.offset / 2 + cell.x * this.cellWidth, this.offset / 2 + cell.y * this.cellWidth, 2,'rgb(255,200,200)')
     this.container.appendChild(trailMark);
