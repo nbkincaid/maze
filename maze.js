@@ -88,7 +88,7 @@ function mazeView(mazeSize, cellSize, domParentID){
   };
 
   this.markFinish = function(x,y){
-    this.container.appendChild(SVG.createRectangle((this.mazeSize-1) * this.cellWidth + 1,(this.mazeSize-1) * this.cellWidth + 1, this.cellWidth-1, this.cellWidth-1, 'rgb(150,255,150)', 'rgb(150,255,150)', .5));
+    this.container.appendChild(SVG.createRectangle((this.mazeSize-1) * this.cellWidth + 1,(this.mazeSize-1) * this.cellWidth + 1, this.cellWidth-2, this.cellWidth-2, 'rgb(150,255,150)', 'rgb(150,255,150)', .5));
   };
 
   this.drawPath = function(cells){
@@ -141,7 +141,7 @@ function mazeModel(size){
 
   this.solutionPath = [];
   this.solveVisiteds = [];
-
+  this.solved = false;
 
 
   this.unvisitedNeighbors = function(neighborList, visitedList){
@@ -212,6 +212,7 @@ function mazeModel(size){
     this.playerPosition;
     this.solutionPath = [];
     this.solveVisiteds = [];
+    this.solved = false;
 
     this.initialize();
   }
@@ -426,9 +427,14 @@ function mazeModel(size){
     this.playerPosition = this.getNodeByCoordinates(this.playerPosition.x, this.playerPosition.y+1)
   },
 
+  this.checkForSolved = function(){
+    if(this.playerPosition == this.finish){
+      this.solved = true;
+    }
+  },
+
   // this runs when the object is initialized
   this.initialize();
-
 };
 
 function mazeController(){
@@ -469,6 +475,8 @@ function mazeController(){
 
 
   $(document).keydown(function(e) {
+    e.preventDefault();
+
     switch(e.which) {
         case 37: // left
           if(model.checkPath("left")){
@@ -494,10 +502,18 @@ function mazeController(){
           }
           break;
 
-        default: return; // exit this handler for other keys
+        default: return;
     }
+
+    model.checkForSolved();
+
     view.markPosition(model.playerPosition);
-    e.preventDefault(); // prevent the default action (scroll / move caret)
+
+    if(model.solved){
+      $("#keep-trying").hide();
+      $("#congrats-msg").show();
+    }
+
   });
 
 };
