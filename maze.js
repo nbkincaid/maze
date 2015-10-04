@@ -26,15 +26,15 @@ SVG = {
     return aLine;
   },
 
-  createRectangle : function(x, y, width, height, color, strokeWidth){
+  createRectangle : function(x, y, width, height, borderColor, fillColor, strokeWidth){
     var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('x', x);
     rect.setAttribute('y', y);
     rect.setAttribute('width', width);
     rect.setAttribute('height', height);
-    rect.setAttribute('stroke', color);
+    rect.setAttribute('stroke', borderColor);
     rect.setAttribute('stroke-width', strokeWidth);
-    rect.setAttributeNS(null,'fill', 'rgb(255,255,255)');
+    rect.setAttributeNS(null,'fill', fillColor);
     return rect;
   },
 
@@ -61,11 +61,12 @@ function mazeView(mazeSize, cellSize, domParentID){
   };
 
   this.drawBorder = function(size) {
-    this.container.appendChild(SVG.createRectangle(0, 0, size, size, 'rgb(0,0,0)', .5))
+    this.container.appendChild(SVG.createRectangle(0, 0, size, size, 'rgb(0,0,0)', 'rgb(255,255,255)', .5))
   };
 
   this.updateView = function(model){
-
+    $(this.container).empty();
+    this.drawBorder(this.width);
     for(var k = 0; k < model.nodes.length; k++){
       var base = model.nodes[k];
       var neighbors = model.allNeighbors(base);
@@ -87,13 +88,20 @@ function mazeView(mazeSize, cellSize, domParentID){
   };
 
   this.markFinish = function(x,y){
-    this.container.appendChild(SVG.createCircle(this.offset / 2 + x * this.cellWidth, this.offset / 2 + y * this.cellWidth, 2,'rgb(0,0,255)'));
-  }
+    this.container.appendChild(SVG.createRectangle((this.mazeSize-1) * this.cellWidth + 1,(this.mazeSize-1) * this.cellWidth + 1, this.cellWidth-1, this.cellWidth-1, 'rgb(150,255,150)', 'rgb(150,255,150)', .5));
+  };
+
+  this.drawPath = function(cells){
+    for(var i=0; i< cells.length; i++){
+      var pathMark = SVG.createCircle(this.offset / 2 + cells[i].x * this.cellWidth, this.offset / 2 + cells[i].y * this.cellWidth, 2,'rgb(0,0,255)')
+      this.container.appendChild(pathMark);
+    }
+  };
 
   this.markTrail = function(cell){
     var trailMark = SVG.createCircle(this.offset / 2 + cell.x * this.cellWidth, this.offset / 2 + cell.y * this.cellWidth, 2,'rgb(255,200,200)')
     this.container.appendChild(trailMark);
-  }
+  };
 
   this.markPosition = function(cell){
     $(this.playerMarker).remove();
@@ -101,7 +109,7 @@ function mazeView(mazeSize, cellSize, domParentID){
     this.markTrail(cell);
     this.playerMarker = SVG.createCircle(this.offset / 2 + cell.x * this.cellWidth, this.offset / 2 + cell.y * this.cellWidth, 2,'rgb(255, 0,0)')
     this.container.appendChild(this.playerMarker);
-  }
+  };
 
   this.drawWall = function(node1, node2){
 
@@ -131,6 +139,83 @@ function mazeModel(size){
   this.buildCrumTrail = [];
   this.playerPosition;
 
+  this.solutionPath = [];
+  this.solveVisiteds = [];
+
+
+
+  this.unvisitedNeighbors = function(neighborList, visitedList){
+    var unvisiteds = [];
+
+    for(var i=0; i<neighborList.length; i++){
+      if(this.checkVisited(neighborList[i], visitedList) == false){
+        unvisiteds.push(neighborList[i]);
+      };
+
+    }
+
+    return unvisiteds;
+
+  };
+
+  this.connectedByPath = function(cell){
+    var allNeighbors = this.allNeighbors(cell);
+    var connectedByPathNeighbors = [];
+
+    for(var i=0; i < allNeighbors.length; i++){
+      if(this.isConnected(cell,allNeighbors[i])){
+        connectedByPathNeighbors.push(allNeighbors[i]);
+      }
+    }
+
+    return connectedByPathNeighbors;
+  }
+
+
+  this.solvePath = function(){
+    this.currentCell = this.finish;
+
+    var openUnvisitedNeighbors;
+    var pathNeighbors;
+    var nextCell;
+
+    while(this.currentCell.id != this.start.id){
+
+      if(this.checkVisited(this.currentCell, this.solveVisiteds) == false){
+        this.solveVisiteds.push(this.currentCell);
+      };
+
+      pathNeighbors = this.connectedByPath(this.currentCell);
+      openUnvisited = this.unvisitedNeighbors(pathNeighbors, this.solveVisiteds);
+
+      if(openUnvisited.length > 0){
+        nextCell = openUnvisited[this.randIndex(openUnvisited.length)];
+        this.solutionPath.push(this.currentCell);
+        this.currentCell = nextCell;
+      }
+      else{
+        beforeCell = this.solutionPath.pop();
+        this.currentCell = beforeCell;
+      }
+    }
+  };
+
+  this.reset = function(){
+    this.size = size;
+    this.nodes = [];
+    this.connectionMatrix = [];
+    this.start;
+    this.finish;
+    this.currentCell;
+    this.buildVisiteds = [];
+    this.buildCrumTrail = [];
+    this.playerPosition;
+    this.solutionPath = [];
+    this.solveVisiteds = [];
+
+    this.initialize();
+  }
+
   this.initialize = function(){
     this.initNodes();
     this.initMatrix();
@@ -138,11 +223,12 @@ function mazeModel(size){
     this.setStart();
     this.setFinish();
     this.initMazePaths();
+    this.solvePath();
   };
 
-  this.checkVisited = function(cell){
-    for(var i = 0; i < this.buildVisiteds.length; i++){
-      if(cell == this.buildVisiteds[i]){
+  this.checkVisited = function(cell, list){
+    for(var i = 0; i < list.length; i++){
+      if(cell == list[i]){
         return true;
       }
     }
@@ -157,11 +243,11 @@ function mazeModel(size){
 
     while(this.buildVisiteds.length < this.nodes.length){
 
-      if(this.checkVisited(this.currentCell) == false){
+      if(this.checkVisited(this.currentCell, this.buildVisiteds) == false){
         this.buildVisiteds.push(this.currentCell);
       };
 
-      openNeighbors = this.openNeighbors(this.currentCell);
+      openNeighbors = this.openNeighbors(this.currentCell,this.buildVisiteds);
 
       if(openNeighbors.length > 0){
 
@@ -266,12 +352,12 @@ function mazeModel(size){
     return neighbors;
   };
 
-  this.openNeighbors = function(node){
+  this.openNeighbors = function(node, visitedList){
     var openNeighbors = [];
     var allNeighbors = this.allNeighbors(node);
 
     for(var i=0; i < allNeighbors.length; i++){
-      if(this.checkVisited(allNeighbors[i]) == false){
+      if(this.checkVisited(allNeighbors[i],visitedList) == false){
         openNeighbors.push(allNeighbors[i]);
       }
     };
@@ -321,7 +407,6 @@ function mazeModel(size){
       }
     }
 
-
     return path;
   },
 
@@ -350,10 +435,38 @@ function mazeController(){
 
   var maze_size = 50;
   var cell_size = 10;
-
   var model = new mazeModel(maze_size);
   var view = new mazeView(maze_size,cell_size, 'maze-svg-container');
-  view.updateView(model);
+
+  $(document).on("click", "#new-maze", function(){
+    view.updateView(model);
+    $("#intro").hide();
+    $("#new-maze").hide();
+    $("#arrow-msg").show();
+    $("#give-up").show();
+    $("#maze-svg-container").show();
+  });
+
+  $(document).on("click", "#give-up",function(){
+    view.drawPath(model.solutionPath);
+    $("#arrow-msg").hide();
+    $("#give-up").hide();
+    $("#keep-trying").show();
+    $("#another").show();
+  });
+
+  $(document).on("click", "#another",function(){
+    model.reset();
+    view.updateView(model);
+    $("#intro").hide();
+    $("#keep-trying").hide();
+    $("#new-maze").hide();
+    $("#another").hide();
+    $("#give-up").show();
+    $("#arrow-msg").show();
+    $("#maze-svg-container").show();
+  });
+
 
   $(document).keydown(function(e) {
     switch(e.which) {

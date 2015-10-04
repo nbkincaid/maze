@@ -1,4 +1,10 @@
 
+#maze-info {
+  width: 500px;
+  margin: 10px auto;
+  text-align: center
+}
+
 #maze-canvas{
   display: block;
   border:1px solid #000;
@@ -12,4 +18,13 @@
   border: none;
   background-color: #000;
   margin: 10px auto;
+}
+
+#arrow-msg, #congrats-msg, #give-up, #maze-svg-container, #keep-trying, #another {
+  display:none;
+}
+
+h1, h3, p{
+  margin: 2px;
+  padding: 0;
 }
