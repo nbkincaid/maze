@@ -1,3 +1,16 @@
+body {
+  background-color:#ccc;
+}
+
+section{
+  border-top: 5px solid #dc0025;
+  background-color:#fff;
+  margin: 10px auto;
+  width: 80%;
+  min-width: 500px;
+  height: 80%;
+  box-shadow: 0 10px 15px 0 rgba(0,0,0,.25)
+}
 
 #maze-info {
   width: 500px;
