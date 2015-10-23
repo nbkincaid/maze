@@ -79,6 +79,7 @@ button:hover {
   color: #000;
   font-weight: bold;
   background-color: #f44;
+  cursor: pointer;
 }
 
 #message-area {
