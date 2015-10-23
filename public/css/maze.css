@@ -3,13 +3,26 @@ body {
 }
 
 section{
+  display: block;
   border-top: 5px solid #dc0025;
-  background-color:#fff;
+  padding: 20px;
+  background-color: #fff;
   margin: 10px auto;
-  width: 80%;
-  min-width: 500px;
-  height: 80%;
+  width: 820px;
+  height: 600px;
   box-shadow: 0 10px 15px 0 rgba(0,0,0,.25)
+}
+
+#left {
+  margin: 0;
+  padding: 0;
+  width: 20%;
+  position: absolute;
+}
+
+
+#right {
+  margin: 0px 0px 0px 250px;
 }
 
 #maze-info {
@@ -31,7 +44,7 @@ section{
   height: 500px;
   border: none;
   background-color: #000;
-  margin: 10px auto;
+  /*margin: 10px auto;*/
 }
 
 #arrow-msg, #congrats-msg, #give-up, #maze-svg-container, #keep-trying, #another {
