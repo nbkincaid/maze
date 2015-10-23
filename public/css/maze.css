@@ -51,7 +51,6 @@ section{
   height: 500px;
   border: none;
   background-color: #000;
-  /*margin: 10px auto;*/
 }
 
 #arrow-msg, #congrats-msg, #give-up, #maze-svg-container, #keep-trying, #another {
@@ -65,4 +64,23 @@ h1, h3, p{
 
 #intro, #arrow-msg, #keep-trying {
   margin: 30px 0;
+}
+
+button {
+  padding: 5px;
+  border-radius: 2px;
+  border: 2px solid #f00;
+  background-color: #f22;
+  color: #fff;
+  width: 130px;
+}
+
+button:hover {
+  color: #000;
+  font-weight: bold;
+  background-color: #f44;
+}
+
+#message-area {
+  height: 80px;
 }
